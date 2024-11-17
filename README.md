@@ -7,9 +7,7 @@ Easily integrate this app into your BigBlueButton server to automatically conver
 After a BigBlueButton class ends, recording process kicks in, which will process recording in three stages - archieve, process and publish. Once recording is published, `/usr/local/bigbluebutton/core/scripts/post_publish/bbb_mp4.rb` is executed.
 
 In `bbb_mp4.rb`, we invoke `bbb-mp4.sh` with corresponding `meeting_id` to convert recording into mp4 video.
-
 `bbb-mp4.sh` starts a docker process to launch Chrome browser with the BigBlueButton playback URL in a Virtual Screen Buffer, that plays the recording and FFmpeg will capture the screen in mp4 format. MP4 will be moved to `/var/www/bigbluebutton-default/recording`.
-
 When you visit the default BBB playback url `https://<your-bbb-fqdn>/playback/presentation/2.3/<meeting_id>`, either of the following two cases happen:
 
 - MP4 video exists: A download button will appear at the bottom right.
@@ -30,7 +28,7 @@ Hence, you can safely deploy this project on your existing BigBlueButton server.
 # Assuming you install bbb-mp4 project at /var/www/
 # SSH to your BigBlueButton server and execute the following commands
 cd /var/www
-git clone https://github.com/manishkatyan/bbb-mp4.git
+git clone https://github.com/vsesem-git/bbb-mp4-for-bbb2.7.X.git
 cd bbb-mp4
 ```
 
@@ -72,9 +70,10 @@ You need to give user bigbluebutton sudo access, as detailed above, for bbb-mp4 
 
 If you are using BigBlueButton 2.6 or higher version you need to add nginx location to access mp4 recording
 ```sh
+mkdir /var/www/bigbluebutton-default/mp4
 cd /usr/share/bigbluebutton/nginx
 sudo touch bbb-mp4.nginx
-sudo bash -c "echo 'location /recording { root    /var/www/bigbluebutton-default; }' > bbb-mp4.nginx"
+sudo bash -c "echo 'location /mp4 { root /var/www/bigbluebutton-default; }' > bbb-mp4.nginx"
 sudo nginx -t
 sudo nginx -s reload
 ```
@@ -95,17 +94,3 @@ In case you want to restore the default playback.html, please follow the steps b
 mv /var/bigbluebutton/playback/presentation/2.3/index_default.html /var/bigbluebutton/playback/presentation/2.3/index.html
 mv /usr/local/bigbluebutton/core/scripts/post_publish/bbb_mp4.rb /usr/local/bigbluebutton/core/scripts/post_publish/bbb_mp4.rb.old
 ```
-
-With this, you would be able to restore default playback behavior and default post_poublish action.
-
-## 🚀 <a href="https://higheredlab.com/bigbluebutton" target="_blank">Stress-free BigBlueButton hosting! Start free Trial</a>
-
-**Save big with our affordable BigBlueButton hosting.**
-
-- Bare metal servers for HD video
-- 40% lower hosting costs
-- Top-rated tech support, 100% uptime
-- Upgrade / cancel anytime
-- 2 weeks free trial; No credit card needed
-
-<a href="https://higheredlab.com/bigbluebutton" target="_blank"><strong>Start Free Trial</strong></a>
