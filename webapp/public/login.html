@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>BBB MP4 — вход</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap" style="max-width:360px; margin-top:12vh;">
+    <div class="card">
+        <h2 style="margin-top:0;">Вход в панель BBB MP4</h2>
+        <form id="loginForm">
+            <label style="font-size:12px;color:var(--muted);">Логин</label>
+            <input type="text" id="username" name="username" style="width:100%;margin:6px 0 14px;padding:10px;border-radius:8px;border:1px solid var(--border);background:#0d1322;color:var(--text);" required>
+            <label style="font-size:12px;color:var(--muted);">Пароль</label>
+            <input type="password" id="password" name="password" style="width:100%;margin:6px 0 14px;padding:10px;border-radius:8px;border:1px solid var(--border);background:#0d1322;color:var(--text);" required>
+            <button class="primary" type="submit" style="width:100%;">Войти</button>
+            <div class="error-msg" id="errorMsg"></div>
+        </form>
+    </div>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorEl = document.getElementById('errorMsg');
+    errorEl.style.display = 'none';
+    const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+    });
+    if (res.ok) {
+        window.location.href = '/';
+    } else {
+        const data = await res.json().catch(() => ({}));
+        errorEl.textContent = data.error || 'Ошибка входа';
+        errorEl.style.display = 'block';
+    }
+});
+</script>
+</body>
+</html>

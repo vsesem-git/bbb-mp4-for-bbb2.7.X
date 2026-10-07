@@ -1,0 +1,47 @@
+# Deploys the standalone conversion dashboard on a dedicated server.
+#
+# Usage:
+#   1. cp webapp/.env.example webapp/.env   # fill in admin password, SMTP, etc.
+#   2. Set HOST_OUTPUT_DIR / HOST_DATA_DIR below (or via .env) to absolute
+#      paths on THIS host — they are bind-mounted both into the dashboard
+#      container and used as -v source when the dashboard launches worker
+#      containers via the mounted Docker socket.
+#   3. docker compose build
+#   4. docker compose up -d
+#   5. Open http://<server>:8080
+#
+# The worker image (bbb-mp4-worker) is built from the repository root
+# Dockerfile — the same image used by the original post_publish integration,
+# so the capture pipeline itself (Chrome + Xvfb + ffmpeg) is unchanged.
+
+services:
+  bbb-mp4-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bbb-mp4-worker
+    # Not started as a service — this entry only builds/tags the image that
+    # the dashboard spawns on demand via `docker run`.
+    profiles: ["build-only"]
+    command: ["true"]
+
+  dashboard:
+    build:
+      context: ./webapp
+    image: bbb-mp4-dashboard
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./webapp/.env
+    environment:
+      - OUTPUT_DIR=/data/output
+      - LOG_DIR=/data/logs
+      - DATA_DIR=/data
+      - DB_PATH=/data/bbb-mp4.db
+      - HOST_OUTPUT_DIR=${HOST_OUTPUT_DIR:-./data/output}
+      - WORKER_MODE=${WORKER_MODE:-docker}
+      - CONVERTER_IMAGE=${CONVERTER_IMAGE:-bbb-mp4-worker}
+    volumes:
+      - ${HOST_DATA_DIR:-./data}:/data
+      - /var/run/docker.sock:/var/run/docker.sock

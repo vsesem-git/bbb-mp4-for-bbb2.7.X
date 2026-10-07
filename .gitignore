@@ -2,6 +2,8 @@ composer.phar
 /vendor/
 .env
 /node_modules/
+node_modules/
+webapp/data/
 nodetext.js
 ./index.html
 .history

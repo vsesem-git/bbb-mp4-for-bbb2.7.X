@@ -2,6 +2,17 @@
 
 Easily integrate this app into your BigBlueButton server to automatically convert class recordings into MP4 videos.
 
+## Веб-панель конвертации (standalone dashboard)
+
+Если нужно конвертировать записи вручную/по ссылке на отдельном сервере, не
+встраиваясь в `post_publish` BBB — см. [`webapp/README.md`](webapp/README.md).
+Это веб-интерфейс, где вы вставляете ссылку на запись (например,
+`https://vks.vsesem.ru/playback/presentation/2.3/<meeting-id>`), а панель
+ставит её в очередь, показывает статус/прогресс/логи в реальном времени,
+позволяет перезапускать упавшие задачи, скачивать готовые mp4 и присылает
+email-уведомления. Движок захвата (Chrome в Xvfb + ffmpeg) не изменён —
+панель лишь управляет им.
+
 ## How it works?
 
 After a BigBlueButton class ends, recording process kicks in, which will process recording in three stages - archieve, process and publish. Once recording is published, `/usr/local/bigbluebutton/core/scripts/post_publish/bbb_mp4.rb` is executed.

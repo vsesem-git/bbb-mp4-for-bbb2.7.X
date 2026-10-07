@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>BBB MP4 — панель конвертации</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+    <header class="topbar">
+        <div>
+            <h1>BBB MP4 — панель конвертации</h1>
+            <div class="sub">Очередь, статусы, логи и скачивание готовых записей</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <span class="sub" id="meLabel"></span>
+            <button id="settingsBtn">Настройки</button>
+            <button id="logoutBtn">Выйти</button>
+        </div>
+    </header>
+
+    <div class="card">
+        <h3 style="margin-top:0;">Новая конвертация</h3>
+        <form id="submitForm" class="submit-row">
+            <input type="text" id="urlInput" placeholder="https://<host>/playback/presentation/2.3/<meeting-id>" required>
+            <input type="email" id="emailInput" placeholder="Email для уведомления (необязательно)">
+            <button class="primary" type="submit">Поставить в очередь</button>
+        </form>
+        <div class="error-msg" id="submitError"></div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0;">Задачи</h3>
+            <div class="sub" id="queueInfo"></div>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>Meeting ID</th>
+                <th>Статус</th>
+                <th>Этап</th>
+                <th>Прогресс</th>
+                <th>Создана</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="jobsBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none;">Пока нет задач — вставьте ссылку выше.</div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="logModal">
+    <div class="modal">
+        <header>
+            <strong id="logModalTitle">Логи</strong>
+            <div>
+                <a id="logDownloadLink" class="btn" style="text-decoration:none;" download>Скачать лог</a>
+                <button id="closeLogModal" class="small">Закрыть</button>
+            </div>
+        </header>
+        <pre id="logContent"></pre>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+        <header>
+            <strong>Настройки</strong>
+            <button id="closeSettingsModal" class="small">Закрыть</button>
+        </header>
+        <div style="padding:18px;">
+            <div class="settings-grid">
+                <div>
+                    <label>Макс. одновременных конвертаций</label>
+                    <input type="number" id="maxConcurrentInput" min="1">
+                </div>
+                <div>
+                    <label>Email по умолчанию для уведомлений</label>
+                    <input type="email" id="notifyEmailInput">
+                </div>
+            </div>
+            <div style="display:flex; gap:20px; margin-top:16px;">
+                <label class="checkbox-row"><input type="checkbox" id="notifySuccessInput"> Уведомлять об успехе</label>
+                <label class="checkbox-row"><input type="checkbox" id="notifyFailureInput"> Уведомлять об ошибке</label>
+            </div>
+            <p class="sub" id="smtpStatus" style="margin-top:14px;"></p>
+            <button class="primary" id="saveSettingsBtn" style="margin-top:10px;">Сохранить</button>
+            <div class="error-msg" id="settingsError"></div>
+        </div>
+    </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

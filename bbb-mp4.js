@@ -23,30 +23,45 @@ var options = {
     ],
 }
 options.executablePath = "/usr/bin/google-chrome"
+
+// Emit a machine-readable status line that the web dashboard (or any other
+// orchestrator) can parse from stdout/docker logs. Human-readable text is
+// still logged alongside it for people tailing logs manually.
+function stage(name, extra) {
+    var payload = Object.assign({ stage: name, ts: new Date().toISOString() }, extra || {});
+    console.log('STAGE:' + JSON.stringify(payload));
+}
+
 async function main() {
     let browser, page;
     try {
+        stage('starting');
         xvfb.startSync()
+        stage('xvfb-started', { display: disp_num });
 
         var url = process.argv[2];
         if (!url) {
             console.warn('URL undefined!');
+            stage('error', { message: 'URL undefined' });
             process.exit(1);
         }
-        // Validate URL 
+        // Validate URL
         var urlRegex = new RegExp('^https?:\\/\\/.*\\/playback\\/presentation\\/2\\.3\\/[a-z0-9]{40}-[0-9]{13}');
         if (!urlRegex.test(url)) {
             console.warn('Invalid recording URL for bbb 2.3!');
             console.warn(url)
+            stage('error', { message: 'Invalid recording URL', url: url });
             process.exit(1);
         }
 
         // Set exportname
         var exportname = new URL(url).pathname.split("/")[4]
+        console.log('EXPORT_NAME:' + exportname);
 
-        // set duration to 0 
+        // set duration to 0
         var duration = 0
 
+        stage('launching-browser');
         browser = await puppeteer.launch(options)
         const pages = await browser.pages()
 
@@ -58,34 +73,40 @@ async function main() {
         });
 
         await page._client.send('Emulation.clearDeviceMetricsOverride')
-            // Catch URL unreachable error
+        stage('opening-recording', { url: url });
+        // Catch URL unreachable error
         await page.goto(url, { waitUntil: 'networkidle2' }).catch(e => {
             console.error('Recording URL unreachable!');
+            stage('error', { message: 'Recording URL unreachable' });
             process.exit(2);
         })
         await page.setBypassCSP(true)
 
         // Check if recording exists (search "404" message)
+        stage('checking-recording');
         await page.waitForTimeout(5 * 1000)
         try {
             var loadMsg = await page.$eval('.error-code', el => el.textContent);
             console.log(loadMsg)
             if (loadMsg == "404") {
                 console.warn("Recording not found!");
+                stage('error', { message: 'Recording not found (404)' });
                 process.exit(1);
             }
         } catch (err) {
             console.log("Recording found")
         }
 
-        // Get recording duration
+        // Get recording duration (fall back to any <video> element if the
+        // expected video.js instance id differs between recordings)
         const recDuration = await page.evaluate(() => {
-            return document.getElementById("vjs_video_3_html5_api").duration
+            var el = document.getElementById("vjs_video_3_html5_api") || document.querySelector('video');
+            return el ? el.duration : 0;
         });
         duration = recDuration
 
-
-        console.log(duration)
+        console.log('DURATION:' + duration)
+        stage('duration-detected', { duration: duration });
 
         await page.waitForSelector('button[class=vjs-big-play-button]');
         await page.$eval('.bottom-content', element => element.style.display = "none");
@@ -95,6 +116,7 @@ async function main() {
         await page.click('button[class=vjs-big-play-button]', { waitUntil: 'domcontentloaded' });
 
         //  Start capturing screen with ffmpeg
+        stage('capturing', { duration: duration });
         const ls = child_process.spawn('sh', ['ffmpeg-cmd.sh', ' ',
             `${duration}`, ' ',
             `${exportname}`, ' ',
@@ -113,16 +135,20 @@ async function main() {
 
         ls.on('close', (code) => {
             console.log(`child process exited with code ${code}`);
+            stage('capture-finished', { exitCode: code });
         });
 
-        await page.waitFor((duration * 1000))
+        await page.waitForTimeout(duration * 1000)
+        stage('finalizing');
     } catch (err) {
         console.log(err)
+        stage('error', { message: err && err.message ? err.message : String(err) });
     } finally {
-        page.close && await page.close()
-        browser.close && await browser.close()
+        page && page.close && await page.close().catch(() => {})
+        browser && browser.close && await browser.close().catch(() => {})
             // Stop xvfb after browser close
         xvfb.stopSync()
+        stage('done');
     }
 }
 
